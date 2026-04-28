@@ -60,10 +60,10 @@ jobs:
         shell: pwsh
         run: |
           # Confirm the libtorrent native module is inside the one-file exe.
-          # pyi-archive_viewer dumps the embedded PKG table; we just grep it.
-          $out = pyi-archive_viewer --log .\dist\pyxTorrent.exe 2>&1 | Out-String
+          # `-l` lists archive contents non-interactively; we grep the table.
+          $out = pyi-archive_viewer -l .\dist\pyxTorrent.exe 2>&1 | Out-String
+          Write-Host $out
           if ($out -notmatch "(?i)libtorrent") {
-            Write-Host $out
             Write-Error "libtorrent not found inside pyxTorrent.exe — spec bundling is broken"
             exit 1
           }
