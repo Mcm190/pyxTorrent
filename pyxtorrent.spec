@@ -6,6 +6,8 @@
 # pylint: disable=undefined-variable
 
 import os
+import importlib.util
+from PyInstaller.utils.hooks import collect_dynamic_libs, collect_data_files
 
 block_cipher = None
 
@@ -14,6 +16,26 @@ block_cipher = None
 datas = [
     ("engines", "engines"),
 ]
+
+# libtorrent on Windows ships as a single top-level `libtorrent.pyd` (a native
+# extension). PyInstaller's hidden-import scan can list it but sometimes fails
+# to actually copy the .pyd into the bundle, which leaves the runtime with
+# `ModuleNotFoundError: libtorrent`. Locate the file ourselves and force-bundle
+# it as a binary, plus any companion DLLs the wheel installed alongside it.
+binaries = []
+_lt_spec = importlib.util.find_spec("libtorrent")
+if _lt_spec is not None and _lt_spec.origin:
+    # Single-file extension (.pyd / .so / .dylib) at site-packages root.
+    binaries.append((_lt_spec.origin, "."))
+    # Sweep neighbouring DLLs (boost_python, OpenSSL, etc.) from the wheel.
+    _lt_dir = os.path.dirname(_lt_spec.origin)
+    for _name in os.listdir(_lt_dir):
+        if _name.lower().endswith(".dll"):
+            _full = os.path.join(_lt_dir, _name)
+            if os.path.isfile(_full):
+                binaries.append((_full, "."))
+# Fallback: PyInstaller helper for packages that ship .dll/.so/.dylib files.
+binaries.extend(collect_dynamic_libs("libtorrent"))
 
 hiddenimports = [
     # The engines/ folder is imported dynamically — list each so PyInstaller
@@ -34,7 +56,7 @@ hiddenimports = [
 a = Analysis(
     ["main.py"],
     pathex=[os.path.abspath("engines")],
-    binaries=[],
+    binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
