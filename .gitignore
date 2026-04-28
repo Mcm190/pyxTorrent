@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec.bak
+pyxtorrent_state.json
+mtorrent_state.json
+*.torrent
+.DS_Store

@@ -1,0 +1,12 @@
+# Search uses the Python standard library only (urllib, html, json, re, ...).
+# These deps are only for the download/build side.
+
+libtorrent>=2.0.0   ; sys_platform != "darwin"
+# On macOS, the pip wheel for libtorrent is unreliable. Install via Homebrew:
+#   brew install libtorrent-rasterbar
+# and ensure your Python can `import libtorrent` (often via a brew-linked
+# libtorrent-python or a venv built against the brew install).
+libtorrent>=2.0.0   ; sys_platform == "darwin"
+
+# Build-time only:
+pyinstaller>=6.0
